@@ -1,0 +1,11 @@
+version: '3'
+
+tasks:
+  dev:
+    cmds:
+      - go build -o bin/app ./cmd && ./bin/app
+    silent: true
+    sources:
+      - "**/*.go"
+      - "**/*.mod"
+      - "**/*.sum"

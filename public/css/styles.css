@@ -1,0 +1,37 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.app-title {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 2rem;
+}
+
+.action-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.action-form__input {
+    margin-bottom: 10px;
+    padding: 10px;
+    width: 500px;
+}
+
+.action-form__button {
+    padding: 5px 10px;
+}
