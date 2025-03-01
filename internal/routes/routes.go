@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"fmt"
 	"lt-app/internal/handlers"
+	"lt-app/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -10,11 +10,11 @@ import (
 func buildApiRoutes(app *fiber.App) {
 	api := app.Group("/api")
 
-	api.Post("/analyze", handlers.AnalyzeWebsite)
+	api.Post("/analyze", handlers.AnalyzeWebPage)
 }
 
 func SetupRoutes(app *fiber.App) {
-	fmt.Println("Setting up routes")
+	utils.Logger.Info("Setting up routes")
 	app.Get("/", handlers.GetHome)
 
 	buildApiRoutes(app)
