@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const value = event.target.value;
         const valid = urlPattern.test(value);
-        console.log({ value, valid });
+        
         if (valid) {
             button.disabled = false;
         } else {
@@ -24,18 +24,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     form.addEventListener('submit', (event) => {
         event.preventDefault();
-        
-        
-        // console.log('Button:', button);
-        // if (!button) {
-        //     console.error('Button not found', button);
-        //     return;
-        // }
 
         const formData = new FormData(form);
-        const url = formData.get('url');
+        const webPageUrl = formData.get('url');
 
-        const payload = {url};
+        const payload = {webPageUrl};
 
         console.log('Payload:', payload);
 
