@@ -35,3 +35,45 @@ body {
 .action-form__button {
     padding: 5px 10px;
 }
+
+.loader {
+    display: none;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.result {
+    display: none;
+    margin-top: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 700px;
+}
+
+.result__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.result__item > label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    max-width: 200px;
+}
+
+.result__item__value {
+    flex: 2; /* Allow value to grow and take available space */
+    display: flex;
+    align-items: center;
+}
+
+.error-display {
+    display: none;
+    color: red;
+    text-align: center;
+    margin-top: 20px;
+}

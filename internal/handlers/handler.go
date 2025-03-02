@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"log/slog"
+	appLogger "lt-app/internal"
 	"lt-app/internal/services"
 	"lt-app/internal/utils"
 
@@ -35,19 +36,19 @@ func validateRequestBody(c *fiber.Ctx, RLogger *slog.Logger) (RequestBody, strin
 }
 
 func AnalyzeWebPage(c *fiber.Ctx) error {
-	RLogger := utils.RLoggerBuilder(c)
+	RLogger := appLogger.RLoggerBuilder(c)
 
 	// Parse the request reqBody
 	reqBody, errMsg := validateRequestBody(c, RLogger)
 
 	if errMsg != "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": errMsg})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": errMsg, "statusCode": "Invalid url format"})
 	}
 
 	stats, err := services.FetchWebPageStats(reqBody.WebPageUrl, RLogger)
 
 	if err != nil {
-		return c.Status(err.StatusCode).JSON(fiber.Map{"error": err.Message})
+		return c.Status(err.StatusCode).JSON(fiber.Map{"error": err.Error})
 	}
 
 	RLogger.Info("ExtractedInfo", "webPageUrl", reqBody.WebPageUrl, "Stats", stats)

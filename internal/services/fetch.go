@@ -6,15 +6,19 @@ import (
 	"lt-app/internal/utils"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-resty/resty/v2"
 )
 
+var MAX_LINKS_PROCESS = 170
+var CONCURRENT_GOROUTINE_LIMIT = 20
+
 // ErrorResponse represents an error response with a status code and message
 type ErrorResponse struct {
 	StatusCode int    `json:"statusCode"`
-	Message    string `json:"message"`
+	Error      string `json:"error"`
 }
 
 type WebPageStats struct {
@@ -28,14 +32,16 @@ type WebPageStats struct {
 }
 
 type PageData struct {
-	Doc        *goquery.Document
-	DoctypeStr string
+	Doc           *goquery.Document
+	DoctypeStr    string
+	WebPageUrl    string
+	webPageOrigin string
 }
 
 func buildErrorResponse(statusCode int, message string) *ErrorResponse {
 	return &ErrorResponse{
 		StatusCode: statusCode,
-		Message:    message,
+		Error:      message,
 	}
 }
 
@@ -87,14 +93,25 @@ func GetWebPageData(webPageurl string, RLogger *slog.Logger) (*PageData, *ErrorR
 		return nil, buildErrorResponse(http.StatusInternalServerError, "Something went wrong")
 	}
 
+	origin, _ := utils.GetOriginFromURL(webPageurl)
+
 	return &PageData{
-		Doc:        doc,
-		DoctypeStr: docTypeStr,
+		Doc:           doc,
+		DoctypeStr:    docTypeStr,
+		WebPageUrl:    webPageurl,
+		webPageOrigin: origin,
 	}, nil
 }
 
 func (pd *PageData) getHeadings() map[string]int {
-	headings := make(map[string]int)
+	headings := map[string]int{
+		"h1": 0,
+		"h2": 0,
+		"h3": 0,
+		"h4": 0,
+		"h5": 0,
+		"h6": 0,
+	}
 
 	// Example: Count the headings
 	pd.Doc.Find("h1, h2, h3, h4, h5, h6").Each(func(i int, s *goquery.Selection) {
@@ -127,18 +144,56 @@ func (pd *PageData) getHtmlVersion() string {
 	return pd.DoctypeStr
 }
 
-func (pd *PageData) setLinkStats(stats *WebPageStats) {
+func (pd *PageData) setLinkStats(stats *WebPageStats) []string {
+	// Store external links in slice to check for accessibility
+	var validLinks []string
+
 	// Count internal and external links
 	pd.Doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		href, exists := s.Attr("href")
-		if exists {
+		if exists && len(href) > 1 && href[0] != '#' && href[0] != '?' {
 			if utils.IsInternalLink(href) {
 				stats.InternalLinks++
+				validLinks = append(validLinks, pd.webPageOrigin+href)
 			} else {
 				stats.ExternalLinks++
+				validLinks = append(validLinks, href)
 			}
 		}
 	})
+	return validLinks
+}
+
+func setInaccessibleLinksCount(urls []string, stats *WebPageStats, RLogger *slog.Logger) {
+	// Count the number of inaccessible links
+	var wg sync.WaitGroup
+	inaccessibleLinksChan := make(chan string)
+	semaphore := make(chan struct{}, CONCURRENT_GOROUTINE_LIMIT) // Limit the number of concurrent requests
+
+	inaccessibleLinks := []string{}
+
+	wg.Add(len(urls))
+
+	for _, link := range urls {
+		semaphore <- struct{}{} // Acquire a semaphore
+
+		go func(link string) {
+			defer func() {
+				<-semaphore // Release the semaphore
+			}()
+			utils.CheckLinkAccessibility(link, &wg, inaccessibleLinksChan)
+		}(link)
+	}
+
+	wg.Wait()
+	close(inaccessibleLinksChan)
+
+	for link := range inaccessibleLinksChan {
+		stats.InaccessibleLinks++
+		inaccessibleLinks = append(inaccessibleLinks, link)
+	}
+
+	RLogger.Info("InaccessibleLinks", "inaccessibleLinks", inaccessibleLinks, "inaccessibleLinkCount", stats.InaccessibleLinks)
 }
 
 func FetchWebPageStats(webPageUrl string, RLogger *slog.Logger) (*WebPageStats, *ErrorResponse) {
@@ -158,7 +213,13 @@ func FetchWebPageStats(webPageUrl string, RLogger *slog.Logger) (*WebPageStats, 
 	}
 
 	// Count internal and external links
-	pageData.setLinkStats(stats)
+	validLinks := pageData.setLinkStats(stats)
+
+	/* When exceeding the limit, process only the first 160 links.
+	Otherwise channel keeps hanging and then the request
+	*/
+	validLinksCount := utils.Min(len(validLinks), MAX_LINKS_PROCESS)
+	setInaccessibleLinksCount(validLinks[0:validLinksCount], stats, RLogger)
 
 	return stats, nil
 }

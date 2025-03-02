@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 )
 
@@ -16,6 +17,7 @@ func SetupMiddleware(app *fiber.App) {
 		Expiration: 30 * time.Second, // Time window 30 seconds
 	}))
 
+	app.Use(pprof.New())
 	app.Use(requestid.New())
 	app.Use(logger.New(logger.Config{
 		TimeFormat: time.RFC3339,

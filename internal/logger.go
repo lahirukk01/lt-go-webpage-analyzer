@@ -1,4 +1,4 @@
-package utils
+package appLogger
 
 import (
 	"log/slog"
