@@ -7,18 +7,23 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-resty/resty/v2"
 )
 
-var MAX_LINKS_PROCESS = 170
 var CONCURRENT_GOROUTINE_LIMIT = 20
 
 // ErrorResponse represents an error response with a status code and message
 type ErrorResponse struct {
 	StatusCode int    `json:"statusCode"`
 	Error      string `json:"error"`
+}
+
+type FetchPageSourceResult struct {
+	BodyBytes          []byte
+	FetchErrorResponse *ErrorResponse
 }
 
 type WebPageStats struct {
@@ -39,22 +44,36 @@ type PageData struct {
 }
 
 func buildErrorResponse(statusCode int, message string) *ErrorResponse {
+	var errorMessage = message
+
+	switch statusCode {
+	case http.StatusNotFound:
+		errorMessage = "Page not found"
+	case http.StatusForbidden:
+		errorMessage = "Access denied"
+	case http.StatusUnauthorized:
+		errorMessage = "Unauthorized"
+	}
+
 	return &ErrorResponse{
 		StatusCode: statusCode,
-		Error:      message,
+		Error:      errorMessage,
 	}
 }
 
-func fetchWebPageSourceContent(webPageurl string, RLogger *slog.Logger) (string, *ErrorResponse) {
-	client := resty.New()
-	client.SetDoNotParseResponse(true) // Do not parse the response body
+func fetchWebPageSourceContent(webPageurl string, wg *sync.WaitGroup, fetchResult chan<- FetchPageSourceResult, RLogger *slog.Logger) {
+	defer wg.Done()
+
+	client := resty.New().SetTimeout(5 * time.Second) // Set a timeout of 5 seconds
+	client.SetDoNotParseResponse(true)                // Do not parse the response body
 
 	resp, err := client.R().
 		Get(webPageurl)
 
 	if err != nil {
 		RLogger.Error("Request Error:", "error", err)
-		return "", buildErrorResponse(http.StatusBadRequest, "Invalid web page URL")
+		fetchResult <- FetchPageSourceResult{nil, buildErrorResponse(http.StatusInternalServerError, "Something went wrong")}
+		return
 	}
 
 	defer resp.RawBody().Close()
@@ -62,26 +81,40 @@ func fetchWebPageSourceContent(webPageurl string, RLogger *slog.Logger) (string,
 	RLogger.Info("Response Status", slog.Int("StatusCode", resp.StatusCode()), slog.String("Status", resp.Status()))
 
 	if resp.StatusCode() >= http.StatusBadRequest {
-		return "", buildErrorResponse(resp.StatusCode(), resp.Status())
+		fetchResult <- FetchPageSourceResult{nil, buildErrorResponse(resp.StatusCode(), resp.Status())}
+		return
 	}
 
 	bodyBytes, err := io.ReadAll(resp.RawBody())
 
 	if err != nil {
 		RLogger.Error("Error reading response body", "error", err)
-		return "", buildErrorResponse(http.StatusInternalServerError, "Something went wrong")
+		fetchResult <- FetchPageSourceResult{nil, buildErrorResponse(http.StatusInternalServerError, "Something went wrong")}
+		return
 	}
-	bodyString := string(bodyBytes)
 
-	return bodyString, nil
+	fetchResult <- FetchPageSourceResult{bodyBytes, nil}
 }
 
 func GetWebPageData(webPageurl string, RLogger *slog.Logger) (*PageData, *ErrorResponse) {
-	bodyString, errResp := fetchWebPageSourceContent(webPageurl, RLogger)
+	var wg sync.WaitGroup
+	fetchResult := make(chan FetchPageSourceResult)
 
-	if errResp != nil {
-		return nil, errResp
+	wg.Add(1)
+	go fetchWebPageSourceContent(webPageurl, &wg, fetchResult, RLogger)
+
+	go func() {
+		wg.Wait()
+		close(fetchResult)
+	}()
+
+	result := <-fetchResult
+
+	if result.FetchErrorResponse != nil {
+		return nil, result.FetchErrorResponse
 	}
+
+	bodyString := string(result.BodyBytes)
 
 	docTypeStr := utils.ExtractDoctypeFromHtmlSource(bodyString)
 
@@ -181,12 +214,14 @@ func setInaccessibleLinksCount(urls []string, stats *WebPageStats, RLogger *slog
 			defer func() {
 				<-semaphore // Release the semaphore
 			}()
-			utils.CheckLinkAccessibility(link, &wg, inaccessibleLinksChan)
+			utils.CheckLinkAccessibilityWithResty(link, &wg, inaccessibleLinksChan)
 		}(link)
 	}
 
-	wg.Wait()
-	close(inaccessibleLinksChan)
+	go func() {
+		wg.Wait()
+		close(inaccessibleLinksChan)
+	}()
 
 	for link := range inaccessibleLinksChan {
 		stats.InaccessibleLinks++
@@ -215,11 +250,7 @@ func FetchWebPageStats(webPageUrl string, RLogger *slog.Logger) (*WebPageStats, 
 	// Count internal and external links
 	validLinks := pageData.setLinkStats(stats)
 
-	/* When exceeding the limit, process only the first 160 links.
-	Otherwise channel keeps hanging and then the request
-	*/
-	validLinksCount := utils.Min(len(validLinks), MAX_LINKS_PROCESS)
-	setInaccessibleLinksCount(validLinks[0:validLinksCount], stats, RLogger)
+	setInaccessibleLinksCount(validLinks, stats, RLogger)
 
 	return stats, nil
 }

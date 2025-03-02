@@ -3,13 +3,15 @@ package utils
 import (
 	"context"
 	"fmt"
-	appLogger "lt-app/internal"
+	appLogger "lt-app/internal/logger"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/go-resty/resty/v2"
 )
 
 func IsValidURL(webPageUrl string) bool {
@@ -33,26 +35,30 @@ func ExtractDoctypeFromHtmlSource(htmlSource string) string {
 	return "unknown"
 }
 
-// func CheckLinkAccessibility(url string, wg *sync.WaitGroup, inaccessibleLinksChan chan<- string) {
-// 	defer wg.Done()
+/*
+Function to check the accessibility of a link using the HEAD method with Resty.
+This function has not been used in the codebase.
+*/
+func CheckLinkAccessibilityWithResty(url string, wg *sync.WaitGroup, inaccessibleLinksChan chan<- string) {
+	defer wg.Done()
 
-// 	client := resty.New().SetTimeout(5 * time.Second)
+	client := resty.New().SetTimeout(5 * time.Second)
 
-// 	resp, err := client.R().Head(url)
+	resp, err := client.R().Head(url)
 
-// 	if err != nil {
-// 		appLogger.Logger.Info("Failed to check link accessibility", "url", url, "error", err)
-// 		inaccessibleLinksChan <- url
-// 		return
-// 	}
+	if err != nil {
+		appLogger.Logger.Info("Failed to check link accessibility", "url", url, "error", err)
+		inaccessibleLinksChan <- url
+		return
+	}
 
-// 	defer resp.RawBody().Close()
+	defer resp.RawBody().Close()
 
-// 	if resp.StatusCode() != http.StatusOK {
-// 		appLogger.Logger.Info("Inaccessible link", "url", url, "statusCode", resp.StatusCode())
-// 		inaccessibleLinksChan <- url
-// 	}
-// }
+	if resp.StatusCode() != http.StatusOK {
+		appLogger.Logger.Info("Inaccessible link", "url", url, "statusCode", resp.StatusCode())
+		inaccessibleLinksChan <- url
+	}
+}
 
 // Function to check the accessibility of a link using the HEAD method
 func CheckLinkAccessibility(url string, wg *sync.WaitGroup, inaccessibleLinksChan chan<- string) {

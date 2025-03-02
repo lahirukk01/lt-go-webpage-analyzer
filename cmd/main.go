@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	appLogger "lt-app/internal"
+	appLogger "lt-app/internal/logger"
 	"lt-app/internal/middleware"
 	"lt-app/internal/routes"
 
@@ -20,6 +20,6 @@ func main() {
 	// Serve static files from the "public" directory
 	app.Static("/static", "./public")
 
-	appLogger.Logger.Info("Server is running on port 3000")
+	// appLogger.Logger.Info("Server is running on port 3000")
 	log.Fatal(app.Listen(":3000"))
 }
