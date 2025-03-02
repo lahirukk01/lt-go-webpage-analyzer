@@ -42,13 +42,15 @@ func AnalyzeWebPage(c *fiber.Ctx) error {
 	reqBody, errMsg := validateRequestBody(c, RLogger)
 
 	if errMsg != "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": errMsg, "statusCode": "Invalid url format"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": errMsg, "statusCode": "Invalid url format",
+		})
 	}
 
 	stats, err := services.FetchWebPageStats(reqBody.WebPageUrl, RLogger)
 
 	if err != nil {
-		return c.Status(err.StatusCode).JSON(fiber.Map{"error": err.Error})
+		return c.JSON(err)
 	}
 
 	RLogger.Info("ExtractedInfo", "webPageUrl", reqBody.WebPageUrl, "Stats", stats)

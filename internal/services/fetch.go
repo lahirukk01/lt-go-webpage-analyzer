@@ -46,13 +46,15 @@ type PageData struct {
 func buildErrorResponse(statusCode int, message string) *ErrorResponse {
 	var errorMessage = message
 
-	switch statusCode {
-	case http.StatusNotFound:
-		errorMessage = "Page not found"
-	case http.StatusForbidden:
-		errorMessage = "Access denied"
-	case http.StatusUnauthorized:
-		errorMessage = "Unauthorized"
+	if message == "" {
+		switch statusCode {
+		case http.StatusNotFound:
+			errorMessage = "Page not found from the url provided"
+		case http.StatusForbidden:
+			errorMessage = "Access denied to the page"
+		case http.StatusUnauthorized:
+			errorMessage = "Unauthorized access to the page"
+		}
 	}
 
 	return &ErrorResponse{
@@ -72,16 +74,25 @@ func fetchWebPageSourceContent(webPageurl string, wg *sync.WaitGroup, fetchResul
 
 	if err != nil {
 		RLogger.Error("Request Error:", "error", err)
-		fetchResult <- FetchPageSourceResult{nil, buildErrorResponse(http.StatusInternalServerError, "Something went wrong")}
+
+		var errorResponse *ErrorResponse
+
+		if strings.Contains(err.Error(), "no such host") {
+			errorResponse = buildErrorResponse(http.StatusBadRequest, "Domain of the url seems to be invalid.")
+		} else {
+			errorResponse = buildErrorResponse(http.StatusInternalServerError, "Something went wrong")
+		}
+
+		fetchResult <- FetchPageSourceResult{nil, errorResponse}
 		return
 	}
 
 	defer resp.RawBody().Close()
 
-	RLogger.Info("Response Status", slog.Int("StatusCode", resp.StatusCode()), slog.String("Status", resp.Status()))
+	RLogger.Info("Web page fetch response Status", "url", webPageurl, slog.Int("StatusCode", resp.StatusCode()), slog.String("Status", resp.Status()))
 
 	if resp.StatusCode() >= http.StatusBadRequest {
-		fetchResult <- FetchPageSourceResult{nil, buildErrorResponse(resp.StatusCode(), resp.Status())}
+		fetchResult <- FetchPageSourceResult{nil, buildErrorResponse(resp.StatusCode(), "")}
 		return
 	}
 
@@ -235,7 +246,7 @@ func FetchWebPageStats(webPageUrl string, RLogger *slog.Logger) (*WebPageStats, 
 	pageData, err := GetWebPageData(webPageUrl, RLogger)
 
 	if err != nil {
-		RLogger.Error("Error loading HTTP response body.", "error", err)
+		RLogger.Error("Error loading HTTP response body.", "url", webPageUrl, "error", err)
 		return nil, err
 	}
 
