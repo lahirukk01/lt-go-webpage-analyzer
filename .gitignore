@@ -27,3 +27,5 @@ go.work.sum
 .task
 
 bin
+
+lint-results.txt
