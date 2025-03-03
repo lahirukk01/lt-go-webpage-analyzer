@@ -1,0 +1,27 @@
+run:
+  timeout: 5m # Set a timeout for linting
+
+linters:
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - goimports
+    - unparam
+  disable:
+    - gocyclo # Disable gocyclo by default
+
+issues:
+  exclude-rules:
+    - path: _test\.go # Exclude issues in test files
+      linters:
+        - errcheck
+
+linters-settings:
+  staticcheck:
+    checks:
+      # Enable all checks, including those for deprecated code
+      - all
+      

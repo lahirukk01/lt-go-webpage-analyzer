@@ -16,6 +16,57 @@
             <input class="action-form__input" type="text" name="url" id="url" placeholder="Enter the URL">
             <button class="action-form__button" type="submit" id="submit">Analyze</button>
         </form>
+        <div class="loader">Analyzing page...</div>
+    </section>
+    <section class="container result-container">
+        <div class="result" id="result">
+            <div class="result__item">
+                <label for="title">Title</label>
+                <div class="result__item__value">
+                    <p id="title">Title</p>
+                </div>
+            </div>
+            <div class="result__item">
+                <label for="htmlVersion">HTML Version</label>
+                <div class="result__item__value">
+                    <p id="htmlVersion">HTML</p>
+                </div>
+            </div>
+            <div class="result__item">
+                <label for="has-login-form">Has Login Form</label>
+                <div class="result__item__value">
+                    <p id="has-login-form">Login</p>
+                </div>
+            </div>
+            <div class="result__item">
+                <label for="external-links">External Links</label>
+                <div class="result__item__value">
+                    <p id="external-links">EXL</p>
+                </div>
+            </div>
+            <div class="result__item">
+                <label for="internal-links">Internal Links</label>
+                <div class="result__item__value">
+                    <p id="internal-links">INTL</p>
+                </div>
+            </div>
+            <div class="result__item">
+                <label for="inacc-links">Inaccessible Links</label>
+                <div class="result__item__value">
+                    <p id="inacc-links">INAL</p>
+                </div>
+            </div>
+            <div class="result__item">
+                <label for="headings">Headings</label>
+                <div class="result__item__value">
+                    <ul id="headings"></ul>
+                </div>
+            </div>
+        </div>
+        <div class="error-display">
+            <p id="error-message"></p>
+            <p id="error-status"></p>
+        </div>
     </section>
     <script src="/static/js/app.js"></script>
 </body>

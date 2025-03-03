@@ -9,3 +9,81 @@ tasks:
       - "**/*.go"
       - "**/*.mod"
       - "**/*.sum"
+      - "**/*.html"
+      - "**/*.css"
+      - "**/*.js"
+
+  build:
+    cmds:
+      - go build -o bin/app ./cmd
+    silent: true
+    sources:
+      - "**/*.go"
+      - "**/*.mod"
+      - "**/*.sum"
+
+  run:
+    deps: [build]
+    cmds:
+      - ./bin/app
+    silent: true
+
+  build:docker:
+    cmds:
+      - docker build -t lt-app .
+    silent: false
+
+  run:docker:
+    # deps: [build:docker]
+    cmds:
+      - docker run -p 3000:3000 lt-app
+    silent: false
+
+  test:
+    cmds:
+      - go test ./...
+    silent: true
+
+  clean:
+    cmds:
+      - rm -f bin/app
+    silent: true
+
+  fmt:
+    cmds:
+      - go fmt ./...
+    silent: true
+
+  lint:
+    cmds:
+      - golangci-lint run
+    silent: true
+
+  deps:
+    cmds:
+      - go mod tidy
+    silent: true
+
+  vendor:
+    cmds:
+      - go mod vendor
+    silent: true
+
+  help:
+    cmds:
+      - |
+        echo "Usage:"
+        echo "  task [task]"
+        echo ""
+        echo "Tasks:"
+        echo "  build     Build the application"
+        echo "  run       Run the application"
+        echo "  test      Run tests"
+        echo "  clean     Clean up generated files"
+        echo "  fmt       Format the code"
+        echo "  lint      Lint the code"
+        echo "  deps      Install dependencies"
+        echo "  vendor    Create the vendor folder"
+        echo "  help      Show this help message"
+    silent: true
+    
