@@ -18,3 +18,10 @@ issues:
     - path: _test\.go # Exclude issues in test files
       linters:
         - errcheck
+
+linters-settings:
+  staticcheck:
+    checks:
+      # Enable all checks, including those for deprecated code
+      - all
+      
