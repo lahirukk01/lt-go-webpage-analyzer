@@ -209,7 +209,7 @@ func (pd *PageData) setLinkStats(stats *WebPageStats) []string {
 	return validLinks
 }
 
-func setInaccessibleLinksCount(urls []string, stats *WebPageStats, RLogger *slog.Logger) {
+func getInaccessibleLinks(urls []string) []string {
 	// Count the number of inaccessible links
 	var wg sync.WaitGroup
 	inaccessibleLinksChan := make(chan string)
@@ -237,11 +237,9 @@ func setInaccessibleLinksCount(urls []string, stats *WebPageStats, RLogger *slog
 	}()
 
 	for link := range inaccessibleLinksChan {
-		stats.InaccessibleLinks++
 		inaccessibleLinks = append(inaccessibleLinks, link)
 	}
-
-	RLogger.Info("InaccessibleLinks", "inaccessibleLinks", inaccessibleLinks, "inaccessibleLinkCount", stats.InaccessibleLinks)
+	return inaccessibleLinks
 }
 
 func FetchWebPageStats(webPageUrl string, RLogger *slog.Logger) (*WebPageStats, *ErrorResponse) {
@@ -263,7 +261,10 @@ func FetchWebPageStats(webPageUrl string, RLogger *slog.Logger) (*WebPageStats, 
 	// Count internal and external links
 	validLinks := pageData.setLinkStats(stats)
 
-	setInaccessibleLinksCount(validLinks, stats, RLogger)
+	inaccessibleLinks := getInaccessibleLinks(validLinks)
+	stats.InaccessibleLinks = len(inaccessibleLinks)
+
+	RLogger.Info("InaccessibleLinks", "inaccessibleLinks", inaccessibleLinks, "inaccessibleLinkCount", stats.InaccessibleLinks)
 
 	return stats, nil
 }
