@@ -13,7 +13,8 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-var CONCURRENT_GOROUTINE_LIMIT = 20
+const CONCURRENT_GOROUTINE_LIMIT = 20
+const INACC_LINKS_MAX_CAP = 300
 
 // ErrorResponse represents an error response with a status code and message
 type ErrorResponse struct {
@@ -214,7 +215,8 @@ func setInaccessibleLinksCount(urls []string, stats *WebPageStats, RLogger *slog
 	inaccessibleLinksChan := make(chan string)
 	semaphore := make(chan struct{}, CONCURRENT_GOROUTINE_LIMIT) // Limit the number of concurrent requests
 
-	inaccessibleLinks := []string{}
+	// Reduce reallocation by setting the capacity of the slice
+	inaccessibleLinks := make([]string, 0, min(len(urls), INACC_LINKS_MAX_CAP))
 
 	wg.Add(len(urls))
 
@@ -225,7 +227,7 @@ func setInaccessibleLinksCount(urls []string, stats *WebPageStats, RLogger *slog
 			defer func() {
 				<-semaphore // Release the semaphore
 			}()
-			utils.CheckLinkAccessibilityWithResty(link, &wg, inaccessibleLinksChan)
+			utils.CheckLinkAccessibility(link, &wg, inaccessibleLinksChan)
 		}(link)
 	}
 

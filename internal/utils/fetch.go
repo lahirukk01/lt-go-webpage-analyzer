@@ -37,7 +37,9 @@ func ExtractDoctypeFromHtmlSource(htmlSource string) string {
 
 /*
 Function to check the accessibility of a link using the HEAD method with Resty.
-This function has not been used in the codebase.
+This function has not been used in the codebase. Done() is not called on the WaitGroup
+when context timeout occurs. This can lead to a deadlock in the application. Not using
+this function in the codebase.
 */
 func CheckLinkAccessibilityWithResty(url string, wg *sync.WaitGroup, inaccessibleLinksChan chan<- string) {
 	defer wg.Done()
