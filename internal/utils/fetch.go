@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"context"
 	"fmt"
 	appLogger "lt-app/internal/logger"
 	"net/http"
@@ -13,6 +12,8 @@ import (
 
 	"github.com/go-resty/resty/v2"
 )
+
+const REQUEST_TIMEOUT_SECONDS = 3
 
 func IsValidURL(webPageUrl string) bool {
 	re := regexp.MustCompile(`^https?:\/\/([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?(\?[^\s]*)?(#[^\s]*)?$`)
@@ -44,7 +45,7 @@ this function in the codebase.
 func CheckLinkAccessibilityWithResty(url string, wg *sync.WaitGroup, inaccessibleLinksChan chan<- string) {
 	defer wg.Done()
 
-	client := resty.New().SetTimeout(5 * time.Second)
+	client := resty.New().SetTimeout(REQUEST_TIMEOUT_SECONDS * time.Second)
 
 	resp, err := client.R().Head(url)
 
@@ -67,14 +68,16 @@ func CheckLinkAccessibility(url string, wg *sync.WaitGroup, inaccessibleLinksCha
 	defer wg.Done()
 
 	client := &http.Client{
-		Timeout: 5 * time.Second, // Set timeout to 5 seconds
+		Timeout: REQUEST_TIMEOUT_SECONDS * time.Second, // Set timeout to 2 seconds
 	}
 
 	// Create a context with a timeout of 5 seconds
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// defer cancel()
+	// req, err := http.NewRequestWithContext(ctx, "HEAD", url, nil)
 
-	req, err := http.NewRequestWithContext(ctx, "HEAD", url, nil)
+	req, err := http.NewRequest("HEAD", url, nil)
+
 	if err != nil {
 		appLogger.Logger.Info("Failed to create request", "url", url, "error", err)
 		inaccessibleLinksChan <- url

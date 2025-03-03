@@ -3,11 +3,10 @@ module lt-app
 go 1.23.5
 
 require (
+	github.com/PuerkitoBio/goquery v1.10.2
+	github.com/go-resty/resty/v2 v2.16.5
 	github.com/gofiber/fiber/v2 v2.52.6
-	github.com/go-resty/resty/v2 v2.16.5 
-	github.com/PuerkitoBio/goquery v1.10.2 
 )
-
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect

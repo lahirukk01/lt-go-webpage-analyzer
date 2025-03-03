@@ -28,6 +28,17 @@ tasks:
       - ./bin/app
     silent: true
 
+  build:docker:
+    cmds:
+      - docker build -t lt-app .
+    silent: false
+
+  run:docker:
+    # deps: [build:docker]
+    cmds:
+      - docker run -p 3000:3000 lt-app
+    silent: false
+
   test:
     cmds:
       - go test ./...
