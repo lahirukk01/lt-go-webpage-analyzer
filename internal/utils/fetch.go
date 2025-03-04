@@ -22,16 +22,18 @@ func IsValidURL(webPageUrl string) bool {
 
 // Helper function to determine if a link is internal
 func IsInternalLink(href string) bool {
-	// Simplified check for internal links
-	return len(href) > 1 && (href[0] == '/')
+	// Regex pattern to match internal links
+	re := regexp.MustCompile(`^\/[^\/].*`)
+	return re.MatchString(href)
 }
 
 // Function to extract the Doctype from the HTML source string
 func ExtractDoctypeFromHtmlSource(htmlSource string) string {
-	re := regexp.MustCompile(`(?i)<!DOCTYPE\s+([^>]+)>`)
+	// re := regexp.MustCompile(`(?i)<!DOCTYPE\s+([^>]+)>`)
+	re := regexp.MustCompile(`(?i)<!DOCTYPE\s+([^\s>]+)`)
 	matches := re.FindStringSubmatch(htmlSource)
 	if len(matches) > 1 {
-		return strings.ToUpper(matches[1])
+		return strings.ToLower(matches[1])
 	}
 	return "unknown"
 }
@@ -60,6 +62,7 @@ func CheckLinkAccessibilityWithResty(url string, wg *sync.WaitGroup, inaccessibl
 	if resp.StatusCode() != http.StatusOK {
 		appLogger.Logger.Info("Inaccessible link", "url", url, "statusCode", resp.StatusCode())
 		inaccessibleLinksChan <- url
+		return
 	}
 }
 
@@ -70,11 +73,6 @@ func CheckLinkAccessibility(url string, wg *sync.WaitGroup, inaccessibleLinksCha
 	client := &http.Client{
 		Timeout: REQUEST_TIMEOUT_SECONDS * time.Second, // Set timeout to 2 seconds
 	}
-
-	// Create a context with a timeout of 5 seconds
-	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	// defer cancel()
-	// req, err := http.NewRequestWithContext(ctx, "HEAD", url, nil)
 
 	req, err := http.NewRequest("HEAD", url, nil)
 
@@ -95,14 +93,18 @@ func CheckLinkAccessibility(url string, wg *sync.WaitGroup, inaccessibleLinksCha
 	if resp.StatusCode != http.StatusOK {
 		appLogger.Logger.Info("Inaccessible link", "url", url, "statusCode", resp.StatusCode)
 		inaccessibleLinksChan <- url
+		return
 	}
 }
 
 func GetOriginFromURL(urlStr string) (string, error) {
-	parsedURL, err := url.Parse(urlStr)
-	if err != nil {
-		return "", err
+	if !IsValidURL(urlStr) {
+		return "", fmt.Errorf("invalid URL: %s", urlStr)
 	}
+
+	// Due to the previous check, the URL is valid. So no err
+	parsedURL, _ := url.Parse(urlStr)
+
 	origin := fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
 	return origin, nil
 }

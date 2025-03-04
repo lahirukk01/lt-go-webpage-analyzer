@@ -29,3 +29,7 @@ go.work.sum
 bin
 
 lint-results.txt
+
+.vscode
+
+coverage.out*
