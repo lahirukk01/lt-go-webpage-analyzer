@@ -1,7 +1,7 @@
 package utils
 
 import (
-	appLogger "lt-app/internal/logger"
+	appLogger "lt-app/internal/applogger"
 	"net/http"
 	"net/http/httptest"
 	"sync"

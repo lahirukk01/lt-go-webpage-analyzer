@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	appLogger "lt-app/internal/logger"
+	appLogger "lt-app/internal/applogger"
 	"lt-app/internal/middleware"
 	"lt-app/internal/routes"
 

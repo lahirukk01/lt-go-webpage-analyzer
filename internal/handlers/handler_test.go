@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"io"
-	appLogger "lt-app/internal/logger"
+	appLogger "lt-app/internal/applogger"
 	"net/http"
 	"net/http/httptest"
 	"strings"

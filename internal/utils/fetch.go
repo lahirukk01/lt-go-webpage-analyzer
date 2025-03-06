@@ -2,7 +2,7 @@ package utils
 
 import (
 	"fmt"
-	appLogger "lt-app/internal/logger"
+	appLogger "lt-app/internal/applogger"
 	"net/http"
 	"net/url"
 	"regexp"
