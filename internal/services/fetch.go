@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"io"
 	"log/slog"
 	"lt-app/internal/utils"
@@ -212,7 +213,7 @@ func (pd *PageData) setLinkStats(stats *WebPageStats) []string {
 func getInaccessibleLinks(urls []string) []string {
 	// Count the number of inaccessible links
 	var wg sync.WaitGroup
-	inaccessibleLinksChan := make(chan string)
+	inaccessibleLinksChan := make(chan string, len(urls))
 	semaphore := make(chan struct{}, CONCURRENT_GOROUTINE_LIMIT) // Limit the number of concurrent requests
 
 	// Reduce reallocation by setting the capacity of the slice
@@ -260,6 +261,11 @@ func FetchWebPageStats(webPageUrl string, RLogger *slog.Logger) (*WebPageStats, 
 
 	// Count internal and external links
 	validLinks := pageData.setLinkStats(stats)
+
+	// Won't allow more than 300 links to be checked
+	if len(validLinks) > INACC_LINKS_MAX_CAP {
+		return nil, buildErrorResponse(http.StatusBadRequest, fmt.Sprintf("Too many links to check. Exceeded the %d limit", INACC_LINKS_MAX_CAP))
+	}
 
 	inaccessibleLinks := getInaccessibleLinks(validLinks)
 	stats.InaccessibleLinks = len(inaccessibleLinks)

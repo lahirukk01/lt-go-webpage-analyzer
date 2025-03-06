@@ -29,3 +29,9 @@ go.work.sum
 bin
 
 lint-results.txt
+
+.vscode
+.idea
+
+coverage.out*
+
