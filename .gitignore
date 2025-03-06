@@ -31,5 +31,7 @@ bin
 lint-results.txt
 
 .vscode
+.idea
 
 coverage.out*
+
