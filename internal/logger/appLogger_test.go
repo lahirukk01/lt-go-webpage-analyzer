@@ -3,7 +3,6 @@ package appLogger
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http/httptest"
 	"os"
@@ -76,39 +75,7 @@ func TestLoggerMethods(t *testing.T) {
 	buf.Reset()
 }
 
-// captureOutput captures os.Stdout and returns it as a string.
-func captureOutput(f func()) string {
-	old := os.Stdout // keep backup of the real stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	f()
-
-	err := w.Close()
-	if err != nil {
-		panic(err)
-	}
-	os.Stdout = old // restoring the real stdout
-	var buf bytes.Buffer
-	_, err = buf.ReadFrom(r)
-	if err != nil {
-		panic(err)
-	}
-	return buf.String()
-}
-
 func TestRLoggerBuilder(t *testing.T) {
-	// Backup the original logger and replace it with a temporary one
-	// originalLogger := Logger
-	// defer func() {
-	// 	Logger = originalLogger
-	// }()
-
-	// // Create a buffer to capture the logger output
-	// var buf bytes.Buffer
-	// handler := slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug})
-	// logger = slog.New(handler)
-
 	// Create a new Fiber app
 	app := fiber.New()
 	app.Use(requestid.New())
@@ -145,7 +112,6 @@ func TestRLoggerBuilder(t *testing.T) {
 			panic(err)
 		}
 		output := buf.String()
-		fmt.Println("Output", output)
 
 		// Check if the request ID is present in the log output
 		if !strings.Contains(output, "test-request-id") {
