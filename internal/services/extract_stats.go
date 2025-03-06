@@ -12,6 +12,7 @@ func FetchWebPageStats(webPageUrl string, RLogger *slog.Logger) (*pagestats.WebP
 	bodyString, fetchError := webfetcher.Fetch(webPageUrl, RLogger)
 
 	if fetchError != nil {
+		RLogger.Error("Error loading HTTP response body.", "url", webPageUrl, "error", fetchError)
 		return nil, fetchError
 	}
 
@@ -19,7 +20,7 @@ func FetchWebPageStats(webPageUrl string, RLogger *slog.Logger) (*pagestats.WebP
 	pageData, pdBuildErr := pgBuilder.Build(webPageUrl, bodyString, RLogger)
 
 	if pdBuildErr != nil {
-		RLogger.Error("Error loading HTTP response body.", "url", webPageUrl, "error", pdBuildErr)
+		RLogger.Error("Error building PageData", "error", pdBuildErr)
 		return nil, pdBuildErr
 	}
 
