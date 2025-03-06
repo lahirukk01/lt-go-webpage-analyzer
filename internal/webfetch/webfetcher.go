@@ -24,7 +24,7 @@ type FetchPageSourceResult struct {
 	FetchErrorResponse *ErrorResponse
 }
 
-type Fetcher interface {
+type IFetcher interface {
 	Fetch(webPageurl string, RLogger *slog.Logger) (string, *ErrorResponse)
 }
 

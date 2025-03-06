@@ -23,7 +23,13 @@ type Links struct {
 	Total    int
 }
 
-func BuildPageData(webPageUrl string, bodyString string, RLogger *slog.Logger) (*PageData, *webfetch.ErrorResponse) {
+type IPageDataBuilder interface {
+	Build(webPageUrl string, bodyString string, RLogger *slog.Logger) (*PageData, *webfetch.ErrorResponse)
+}
+
+type PageDataBuilder struct{}
+
+func (pdb *PageDataBuilder) Build(webPageUrl string, bodyString string, RLogger *slog.Logger) (*PageData, *webfetch.ErrorResponse) {
 	docTypeStr := utils.ExtractDoctypeFromHtmlSource(bodyString)
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(bodyString))

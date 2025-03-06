@@ -13,6 +13,12 @@ import (
 const INACC_LINKS_MAX_CAP = 300
 const CONCURRENT_GOROUTINE_LIMIT = 20
 
+type IPageStatsBuilder interface {
+	Build(pageData *pagedata.PageData, RLogger *slog.Logger) (*WebPageStats, *webfetch.ErrorResponse)
+}
+
+type PageStatsBuilder struct{}
+
 type WebPageStats struct {
 	HTMLVersion       string         `json:"htmlVersion"`
 	Title             string         `json:"title"`
@@ -24,7 +30,7 @@ type WebPageStats struct {
 	HasLoginForm      bool           `json:"hasLoginForm"`
 }
 
-func BuildWebPageStats(pageData *pagedata.PageData, RLogger *slog.Logger) (*WebPageStats, *webfetch.ErrorResponse) {
+func (psb *PageStatsBuilder) Build(pageData *pagedata.PageData, RLogger *slog.Logger) (*WebPageStats, *webfetch.ErrorResponse) {
 	stats := &WebPageStats{
 		HTMLVersion:       pageData.DoctypeStr,
 		Title:             pageData.GetTitle(),

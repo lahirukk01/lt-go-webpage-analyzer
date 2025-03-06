@@ -9,14 +9,14 @@ import (
 
 func FetchWebPageStats(webPageUrl string, RLogger *slog.Logger) (*pagestats.WebPageStats, *webfetch.ErrorResponse) {
 	webfetcher := &webfetch.HTTPFetcher{}
-
 	bodyString, fetchError := webfetcher.Fetch(webPageUrl, RLogger)
 
 	if fetchError != nil {
 		return nil, fetchError
 	}
 
-	pageData, pdBuildErr := pagedata.BuildPageData(webPageUrl, bodyString, RLogger)
+	pgBuilder := &pagedata.PageDataBuilder{}
+	pageData, pdBuildErr := pgBuilder.Build(webPageUrl, bodyString, RLogger)
 
 	if pdBuildErr != nil {
 		RLogger.Error("Error loading HTTP response body.", "url", webPageUrl, "error", pdBuildErr)
@@ -24,7 +24,8 @@ func FetchWebPageStats(webPageUrl string, RLogger *slog.Logger) (*pagestats.WebP
 	}
 
 	// Create an instance of WebPageStats
-	stats, statBuildErr := pagestats.BuildWebPageStats(pageData, RLogger)
+	psBuilder := &pagestats.PageStatsBuilder{}
+	stats, statBuildErr := psBuilder.Build(pageData, RLogger)
 
 	if statBuildErr != nil {
 		RLogger.Error("Error building WebPageStats", "error", statBuildErr)
