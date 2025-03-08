@@ -84,7 +84,7 @@ func TestFetchWebPageSourceContent(t *testing.T) {
 			// Create a logger
 			logger := slog.Default()
 
-			var webPageUrl = ""
+			var webPageUrl string
 
 			if tt.statusCode == 0 {
 				webPageUrl = "https://invalidurl"
