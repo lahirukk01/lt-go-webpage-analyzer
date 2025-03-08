@@ -26,7 +26,7 @@ func FetchWebPageStats(webPageUrl string, RLogger *slog.Logger) (*pagestats.WebP
 
 	// Create an instance of WebPageStats
 	psBuilder := &pagestats.PageStatsBuilder{}
-	stats, statBuildErr := psBuilder.Build(pageData, RLogger)
+	stats, statBuildErr := psBuilder.Build(pageData, webfetcher, RLogger)
 
 	if statBuildErr != nil {
 		RLogger.Error("Error building WebPageStats", "error", statBuildErr)

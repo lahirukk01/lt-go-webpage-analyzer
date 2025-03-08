@@ -1,0 +1,5 @@
+package constants
+
+const INACC_LINKS_MAX_CAP = 300
+const CONCURRENT_GOROUTINE_LIMIT = 20
+const REQUEST_TIMEOUT_SECONDS = 3

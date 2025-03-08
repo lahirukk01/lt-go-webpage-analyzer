@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	appLogger "lt-app/internal/applogger"
+	"lt-app/internal/constants"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -13,8 +14,6 @@ import (
 	"github.com/go-resty/resty/v2"
 	"golang.org/x/net/html"
 )
-
-const REQUEST_TIMEOUT_SECONDS = 3
 
 func IsValidURL(webPageUrl string) bool {
 	re := regexp.MustCompile(`^https?:\/\/([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?(\?[^\s]*)?(#[^\s]*)?$`)
@@ -48,7 +47,7 @@ this function in the codebase.
 func CheckLinkAccessibilityWithResty(url string, wg *sync.WaitGroup, inaccessibleLinksChan chan<- string) {
 	defer wg.Done()
 
-	client := resty.New().SetTimeout(REQUEST_TIMEOUT_SECONDS * time.Second)
+	client := resty.New().SetTimeout(constants.REQUEST_TIMEOUT_SECONDS * time.Second)
 
 	resp, err := client.R().Head(url)
 
@@ -72,7 +71,7 @@ func CheckLinkAccessibility(url string, wg *sync.WaitGroup, inaccessibleLinksCha
 	defer wg.Done()
 
 	client := &http.Client{
-		Timeout: REQUEST_TIMEOUT_SECONDS * time.Second, // Set timeout to 2 seconds
+		Timeout: constants.REQUEST_TIMEOUT_SECONDS * time.Second, // Set timeout to 2 seconds
 	}
 
 	req, err := http.NewRequest("HEAD", url, nil)

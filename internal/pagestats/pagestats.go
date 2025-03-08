@@ -3,18 +3,14 @@ package pagestats
 import (
 	"fmt"
 	"log/slog"
+	"lt-app/internal/constants"
 	"lt-app/internal/pagedata"
-	"lt-app/internal/utils"
 	"lt-app/internal/webfetch"
 	"net/http"
-	"sync"
 )
 
-const INACC_LINKS_MAX_CAP = 300
-const CONCURRENT_GOROUTINE_LIMIT = 20
-
 type IPageStatsBuilder interface {
-	Build(pageData *pagedata.PageData, RLogger *slog.Logger) (*WebPageStats, *webfetch.ErrorResponse)
+	Build(pageData pagedata.IPageData, RLogger *slog.Logger) (*WebPageStats, *webfetch.ErrorResponse)
 }
 
 type PageStatsBuilder struct{}
@@ -30,9 +26,9 @@ type WebPageStats struct {
 	HasLoginForm      bool           `json:"hasLoginForm"`
 }
 
-func (psb *PageStatsBuilder) Build(pageData *pagedata.PageData, RLogger *slog.Logger) (*WebPageStats, *webfetch.ErrorResponse) {
+func (psb *PageStatsBuilder) Build(pageData pagedata.IPageData, fetcher webfetch.IFetcher, RLogger *slog.Logger) (*WebPageStats, *webfetch.ErrorResponse) {
 	stats := &WebPageStats{
-		HTMLVersion:       pageData.DoctypeStr,
+		HTMLVersion:       pageData.GetHtmlVersion(),
 		Title:             pageData.GetTitle(),
 		Headings:          pageData.GetHeadings(),
 		InaccessibleLinks: 0,
@@ -45,46 +41,14 @@ func (psb *PageStatsBuilder) Build(pageData *pagedata.PageData, RLogger *slog.Lo
 	stats.TotalLinks = links.Total
 
 	// Won't allow more than 300 links to be checked
-	if len(validLinks) > INACC_LINKS_MAX_CAP {
-		return nil, webfetch.BuildErrorResponse(http.StatusBadRequest, fmt.Sprintf("Too many links to check. Exceeded the %d limit", INACC_LINKS_MAX_CAP))
+	if len(validLinks) > constants.INACC_LINKS_MAX_CAP {
+		errMessage := fmt.Sprintf("Too many links to check. Exceeded the %d limit", constants.INACC_LINKS_MAX_CAP)
+		return nil, webfetch.BuildErrorResponse(http.StatusBadRequest, errMessage)
 	}
 
-	inaccessibleLinks := getInaccessibleLinks(validLinks)
+	inaccessibleLinks := fetcher.GetInaccessibleLinks(validLinks)
 	stats.InaccessibleLinks = len(inaccessibleLinks)
 	RLogger.Info("InaccessibleLinks", "inaccessibleLinks", inaccessibleLinks, "inaccessibleLinkCount", stats.InaccessibleLinks)
 
 	return stats, nil
-}
-
-func getInaccessibleLinks(urls []string) []string {
-	// Count the number of inaccessible links
-	var wg sync.WaitGroup
-	inaccessibleLinksChan := make(chan string, len(urls))
-	semaphore := make(chan struct{}, CONCURRENT_GOROUTINE_LIMIT) // Limit the number of concurrent requests
-
-	// Reduce reallocation by setting the capacity of the slice
-	inaccessibleLinks := make([]string, 0, min(len(urls), INACC_LINKS_MAX_CAP))
-
-	wg.Add(len(urls))
-
-	for _, link := range urls {
-		semaphore <- struct{}{} // Acquire a semaphore
-
-		go func(link string) {
-			defer func() {
-				<-semaphore // Release the semaphore
-			}()
-			utils.CheckLinkAccessibility(link, &wg, inaccessibleLinksChan)
-		}(link)
-	}
-
-	go func() {
-		wg.Wait()
-		close(inaccessibleLinksChan)
-	}()
-
-	for link := range inaccessibleLinksChan {
-		inaccessibleLinks = append(inaccessibleLinks, link)
-	}
-	return inaccessibleLinks
 }

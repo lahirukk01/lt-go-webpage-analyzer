@@ -26,6 +26,14 @@ type IPageDataBuilder interface {
 	Build(webPageUrl string, bodyString string, RLogger *slog.Logger) (*PageData, *webfetch.ErrorResponse)
 }
 
+type IPageData interface {
+	GetHeadings() map[string]int
+	GetTitle() string
+	ContainsLoginForm() bool
+	GetHtmlVersion() string
+	GetLinkStats() (*Links, []string)
+}
+
 type PageDataBuilder struct{}
 
 func (pdb *PageDataBuilder) Build(webPageUrl string, bodyString string, RLogger *slog.Logger) (*PageData, *webfetch.ErrorResponse) {

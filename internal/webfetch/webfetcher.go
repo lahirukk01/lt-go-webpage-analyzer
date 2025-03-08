@@ -5,6 +5,8 @@ package webfetch
 import (
 	"io"
 	"log/slog"
+	"lt-app/internal/constants"
+	"lt-app/internal/utils"
 	"net/http"
 	"strings"
 	"sync"
@@ -26,6 +28,7 @@ type FetchPageSourceResult struct {
 
 type IFetcher interface {
 	Fetch(webPageurl string, RLogger *slog.Logger) (string, *ErrorResponse)
+	GetInaccessibleLinks(urls []string) []string
 }
 
 type HTTPFetcher struct{}
@@ -113,4 +116,37 @@ func BuildErrorResponse(statusCode int, message string) *ErrorResponse {
 		StatusCode: statusCode,
 		Error:      errorMessage,
 	}
+}
+
+func (f *HTTPFetcher) GetInaccessibleLinks(urls []string) []string {
+	// Count the number of inaccessible links
+	var wg sync.WaitGroup
+	inaccessibleLinksChan := make(chan string, len(urls))
+	semaphore := make(chan struct{}, constants.CONCURRENT_GOROUTINE_LIMIT) // Limit the number of concurrent requests
+
+	// Reduce reallocation by setting the capacity of the slice
+	inaccessibleLinks := make([]string, 0, min(len(urls), constants.INACC_LINKS_MAX_CAP))
+
+	wg.Add(len(urls))
+
+	for _, link := range urls {
+		semaphore <- struct{}{} // Acquire a semaphore
+
+		go func(link string) {
+			defer func() {
+				<-semaphore // Release the semaphore
+			}()
+			utils.CheckLinkAccessibility(link, &wg, inaccessibleLinksChan)
+		}(link)
+	}
+
+	go func() {
+		wg.Wait()
+		close(inaccessibleLinksChan)
+	}()
+
+	for link := range inaccessibleLinksChan {
+		inaccessibleLinks = append(inaccessibleLinks, link)
+	}
+	return inaccessibleLinks
 }
