@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -37,65 +36,6 @@ func ExtractDoctypeFromHtmlSource(htmlSource string) string {
 	return "unknown"
 }
 
-/*
-Function to check the accessibility of a link using the HEAD method with Resty.
-This function has not been used in the codebase. Done() is not called on the WaitGroup
-when context timeout occurs. This can lead to a deadlock in the application. Not using
-this function in the codebase.
-*/
-func CheckLinkAccessibilityWithResty(url string, wg *sync.WaitGroup, inaccessibleLinksChan chan<- string) {
-	defer wg.Done()
-
-	client := resty.New().SetTimeout(constants.REQUEST_TIMEOUT_SECONDS * time.Second)
-
-	resp, err := client.R().Head(url)
-
-	if err != nil {
-		appLogger.Logger.Info("Failed to check link accessibility", "url", url, "error", err)
-		inaccessibleLinksChan <- url
-		return
-	}
-
-	defer resp.RawBody().Close()
-
-	if resp.StatusCode() != http.StatusOK {
-		appLogger.Logger.Info("Inaccessible link", "url", url, "statusCode", resp.StatusCode())
-		inaccessibleLinksChan <- url
-		return
-	}
-}
-
-// Function to check the accessibility of a link using the HEAD method
-func CheckLinkAccessibility(url string, wg *sync.WaitGroup, inaccessibleLinksChan chan<- string) {
-	defer wg.Done()
-
-	client := &http.Client{
-		Timeout: constants.REQUEST_TIMEOUT_SECONDS * time.Second, // Set timeout to 2 seconds
-	}
-
-	req, err := http.NewRequest("HEAD", url, nil)
-
-	if err != nil {
-		appLogger.Logger.Info("Failed to create request", "url", url, "error", err)
-		inaccessibleLinksChan <- url
-		return
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		appLogger.Logger.Info("Failed to check link accessibility", "url", url, "error", err)
-		inaccessibleLinksChan <- url
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		appLogger.Logger.Info("Inaccessible link", "url", url, "statusCode", resp.StatusCode)
-		inaccessibleLinksChan <- url
-		return
-	}
-}
-
 func GetOriginFromURL(urlStr string) (string, error) {
 	if !IsValidURL(urlStr) {
 		return "", fmt.Errorf("invalid URL: %s", urlStr)
@@ -107,6 +47,65 @@ func GetOriginFromURL(urlStr string) (string, error) {
 	origin := fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
 	return origin, nil
 }
+
+/*
+Function to check the accessibility of a link using the HEAD method with Resty.
+*/
+func CheckLinkAccessibilityWithResty(url string) bool {
+	client := resty.New().SetTimeout(constants.REQUEST_TIMEOUT_SECONDS * time.Second)
+
+	resp, err := client.R().Get(url)
+
+	if err != nil {
+		appLogger.Logger.Info("Failed to check link accessibility", "url", url, "error", err)
+		return false
+	}
+
+	defer resp.RawBody().Close()
+
+	if resp.StatusCode() != http.StatusOK {
+		appLogger.Logger.Info("Inaccessible link", "url", url, "statusCode", resp.StatusCode())
+		return false
+	}
+
+	return true
+}
+
+/*
+	Function to check the accessibility of a link using the GET method.
+
+This function has not been used in the codebase. Improved the performance
+by using the above function CheckLinkAccessibilityWithResty.
+*/
+// func CheckLinkAccessibility(url string, wg *sync.WaitGroup, inaccessibleLinksChan chan<- string) {
+// 	defer wg.Done()
+
+// 	client := &http.Client{
+// 		Timeout: constants.REQUEST_TIMEOUT_SECONDS * time.Second, // Set timeout to 2 seconds
+// 	}
+
+// 	req, err := http.NewRequest("GET", url, nil)
+
+// 	if err != nil {
+// 		appLogger.Logger.Info("Failed to create request", "url", url, "error", err)
+// 		inaccessibleLinksChan <- url
+// 		return
+// 	}
+
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		appLogger.Logger.Info("Failed to check link accessibility", "url", url, "error", err)
+// 		inaccessibleLinksChan <- url
+// 		return
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusOK {
+// 		appLogger.Logger.Info("Inaccessible link", "url", url, "statusCode", resp.StatusCode)
+// 		inaccessibleLinksChan <- url
+// 		return
+// 	}
+// }
 
 /*
 *This function has not been used in the code. However need a html tag validation

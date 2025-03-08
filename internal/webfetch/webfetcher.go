@@ -121,11 +121,11 @@ func BuildErrorResponse(statusCode int, message string) *ErrorResponse {
 func (f *HTTPFetcher) GetInaccessibleLinks(urls []string) []string {
 	// Count the number of inaccessible links
 	var wg sync.WaitGroup
-	inaccessibleLinksChan := make(chan string, len(urls))
 	semaphore := make(chan struct{}, constants.CONCURRENT_GOROUTINE_LIMIT) // Limit the number of concurrent requests
 
 	// Reduce reallocation by setting the capacity of the slice
-	inaccessibleLinks := make([]string, 0, min(len(urls), constants.INACC_LINKS_MAX_CAP))
+	var inaccessibleLinks = make([]string, 0, len(urls))
+	var mu sync.Mutex
 
 	wg.Add(len(urls))
 
@@ -135,18 +135,17 @@ func (f *HTTPFetcher) GetInaccessibleLinks(urls []string) []string {
 		go func(link string) {
 			defer func() {
 				<-semaphore // Release the semaphore
+				wg.Done()
 			}()
-			utils.CheckLinkAccessibility(link, &wg, inaccessibleLinksChan)
+			if !utils.CheckLinkAccessibilityWithResty(link) {
+				mu.Lock()
+				inaccessibleLinks = append(inaccessibleLinks, link)
+				mu.Unlock()
+			}
 		}(link)
 	}
 
-	go func() {
-		wg.Wait()
-		close(inaccessibleLinksChan)
-	}()
+	wg.Wait()
 
-	for link := range inaccessibleLinksChan {
-		inaccessibleLinks = append(inaccessibleLinks, link)
-	}
 	return inaccessibleLinks
 }
