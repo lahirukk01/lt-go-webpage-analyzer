@@ -101,20 +101,3 @@ func TestPageDataBuilder(t *testing.T) {
 		t.Errorf("Expected 8 valid links, got %d", len(validLinks))
 	}
 }
-
-// func TestPageDataBuilder_BuildFailure(t *testing.T) {
-// 	invalidHtmlContentStr := getMockHtmlContent("invalid.html", t)
-// 	expectedPageUrl := "https://www.example.com/page2"
-
-// 	RLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-
-// 	builder := &PageDataBuilder{}
-
-// 	pageData, err := builder.Build(expectedPageUrl, invalidHtmlContentStr, RLogger)
-
-// 	fmt.Println("PageData", pageData)
-
-// 	if err == nil {
-// 		t.Errorf("Expected error, got nil")
-// 	}
-// }
