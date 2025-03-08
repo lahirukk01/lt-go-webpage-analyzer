@@ -1,37 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Webpage to Scrape</title>
-    </head>
-    <body>
-        <h1>This is an H1 Heading</h1>
-        <h2>This is an H2 Heading</h2>
-        <h2>Another H2 Heading</h2>
-        <h3>This is an H3 Heading</h3>
-        <h3>Another H3 Heading</h3>
-        <h3>Yet Another H3 Heading</h3>
-        <h4>This is an H4 Heading</h4>
-        <h4>Another H4 Heading</h4>
-        <h4>Yet Another H4 Heading</h4>
-        <h4>And Another H4 Heading</h4>
-        <h5>This is an H5 Heading</h5>
-        <h5>Another H5 Heading</h5>
-        <h5>Yet Another H5 Heading</h5>
-        <h5>And Another H5 Heading</h5>
-        <h5>One More H5 Heading</h5>
-        <h6>This is an H6 Heading</h6>
-        <h6>Another H6 Heading</h6>
-        <h6>Yet Another H6 Heading</h6>
-        <h6>And Another H6 Heading</h6>
-        <h6>One More H6 Heading</h6>
-        <h6>The Last H6 Heading</h6>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Webpage to Scrape</title>
+  </head>
+  <body>
+    <h1>This is an H1 Heading</h1>
+    <h2>This is an H2 Heading</h2>
+    <h2>Another H2 Heading</h2>
+    <h3>This is an H3 Heading</h3>
+    <h3>Another H3 Heading</h3>
+    <h3>Yet Another H3 Heading</h3>
+    <h4>This is an H4 Heading</h4>
+    <h4>Another H4 Heading</h4>
+    <h4>Yet Another H4 Heading</h4>
+    <h4>And Another H4 Heading</h4>
+    <h5>This is an H5 Heading</h5>
+    <h5>Another H5 Heading</h5>
+    <h5>Yet Another H5 Heading</h5>
+    <h5>And Another H5 Heading</h5>
+    <h5>One More H5 Heading</h5>
+    <h6>This is an H6 Heading</h6>
+    <h6>Another H6 Heading</h6>
+    <h6>Yet Another H6 Heading</h6>
+    <h6>And Another H6 Heading</h6>
+    <h6>One More H6 Heading</h6>
+    <h6>The Last H6 Heading</h6>
 
-        <a href="http://localhost:3001/link1">Link 1</a><br>
-        <a href="http://localhost:3001/link2">Link 2</a><br>
-        <a href="http://localhost:3001/link3">Link 3</a><br>
-        <a href="http://localhost:3001/link4">Link 4</a><br>
-        <a href="http://localhost:3001/link5">Link 5</a><br>
-        <a href="http://localhost:3001/invalid-link">Invalid Link</a>
-    </body>
+    <a href="http://localhost:3001/link1">Link 1</a><br />
+    <a href="http://localhost:3001/link2">Link 2</a><br />
+    <a href="http://localhost:3001/link3">Link 3</a><br />
+    <a href="http://localhost:3001/link4">Link 4</a><br />
+    <a href="http://localhost:3001/link5">Link 5</a><br />
+    <a href="http://localhost:3001/invalid-link">Invalid Link</a>
+
+    <form action="/login" method="post">
+      <div>
+        <label for="username">Username:</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          placeholder="Enter your username"
+        />
+      </div>
+      <div>
+        <label for="password">Password:</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Enter your password"
+        />
+      </div>
+      <div>
+        <button type="submit">Sign In</button>
+      </div>
+    </form>
+
+    <section id="section1">Section 1</section>
+    <p>Content of section 1.</p>
+
+    <section id="section2">Section 2</section>
+    <p>Content of section 2.</p>
+
+    <a href="#section1">Go to Section 1</a><br />
+    <a href="#section2">Go to Section 2</a><br />
+
+    <a href="/page1">Page1</a>
+    <a href="/page2">Page2</a>
+  </body>
 </html>

@@ -20,7 +20,7 @@ func getMockHtmlContent(filename string, t *testing.T) string {
 	return string(htmlContent)
 }
 
-func TestPageDataBuilder_BuildSuccess(t *testing.T) {
+func TestPageDataBuilder(t *testing.T) {
 	// Load the mock HTML content from file
 	htmlContentStr := getMockHtmlContent("scrape.html", t)
 
@@ -43,6 +43,62 @@ func TestPageDataBuilder_BuildSuccess(t *testing.T) {
 	}
 	if pageData.DoctypeStr != expectedDoctype {
 		t.Errorf("Expected doctype %q, got %q", expectedDoctype, pageData.DoctypeStr)
+	}
+
+	headings := pageData.GetHeadings()
+
+	expectedHeadings := map[string]int{
+		"h1": 1,
+		"h2": 2,
+		"h3": 3,
+		"h4": 4,
+		"h5": 5,
+		"h6": 6,
+	}
+
+	for heading, count := range headings {
+		if count != expectedHeadings[heading] {
+			t.Errorf("Expected heading %q count %d, got %d", heading, expectedHeadings[heading], count)
+		}
+	}
+
+	title := pageData.GetTitle()
+	expectedTitle := "Webpage to Scrape"
+
+	if title != expectedTitle {
+		t.Errorf("Expected title %q, got %q", expectedTitle, title)
+	}
+
+	htmlVersion := pageData.GetHtmlVersion()
+	expectedHtmlVersion := "html5"
+
+	if htmlVersion != expectedHtmlVersion {
+		t.Errorf("Expected HTML version %q, got %q", expectedHtmlVersion, htmlVersion)
+	}
+
+	hasLoginForm := pageData.ContainsLoginForm()
+
+	if !hasLoginForm {
+		t.Errorf("Expected page to contain login form")
+	}
+
+	linkStats, validLinks := pageData.GetLinkStats()
+
+	expectedLinkStats := &Links{
+		Internal: 2,
+		External: 6,
+	}
+
+	if linkStats.Internal != expectedLinkStats.Internal {
+		t.Errorf("Expected internal links %d, got %d", expectedLinkStats.Internal, linkStats.Internal)
+	}
+
+	if linkStats.External != expectedLinkStats.External {
+		t.Errorf("Expected external links %d, got %d", expectedLinkStats.External, linkStats.External)
+	}
+
+	if len(validLinks) != 8 {
+		t.Errorf("Expected 8 valid links, got %d", len(validLinks))
 	}
 }
 

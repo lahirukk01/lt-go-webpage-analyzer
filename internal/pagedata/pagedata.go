@@ -10,10 +10,10 @@ import (
 )
 
 type PageData struct {
-	Doc           *goquery.Document
-	DoctypeStr    string
-	WebPageUrl    string
-	WebPageOrigin string
+	Doc           *goquery.Document `json:"-"` // Do not serialize this field
+	DoctypeStr    string            `json:"doctypeStr"`
+	WebPageUrl    string            `json:"webPageUrl"`
+	WebPageOrigin string            `json:"webPageOrigin"`
 }
 
 type Links struct {
@@ -78,16 +78,22 @@ func (pd *PageData) GetTitle() string {
 func (pd *PageData) ContainsLoginForm() bool {
 	doc := pd.Doc
 	// Look for form elements with input fields for username and password
-	hasUsername := doc.Find("input[type='text'], input[type='email'], input[name='username'], input[name='email']").Length() > 0
 	hasPassword := doc.Find("input[type='password']").Length() > 0
-	hasSubmit := doc.Find("input[type='submit'], button[type='submit']").Length() > 0
+	// hasUsername := doc.Find("input[type='text'], input[type='email'], input[name='username'], input[name='email']").Length() > 0
+	// hasSubmit := doc.Find("input[type='submit'], button[type='submit']").Length() > 0
 
-	return hasUsername && hasPassword && hasSubmit
+	// Check for a button with text "signin" or "sign in" (case-insensitive)
+	hasSigninButton := doc.Find("button").FilterFunction(func(_ int, s *goquery.Selection) bool {
+		text := strings.ToLower(s.Text())
+		return strings.Contains(text, "sign in") || strings.Contains(text, "signin") || strings.Contains(text, "login") || strings.Contains(text, "log in")
+	}).Length() > 0
+
+	return hasPassword && hasSigninButton
 }
 
 func (pd *PageData) GetHtmlVersion() string {
-	if pd.DoctypeStr == "HTML" {
-		return "HTML5"
+	if pd.DoctypeStr == "html" {
+		return "html5"
 	}
 	return pd.DoctypeStr
 }
