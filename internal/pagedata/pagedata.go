@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"lt-app/internal/utils"
 	"lt-app/internal/webfetch"
-	"net/http"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -30,16 +29,18 @@ type IPageDataBuilder interface {
 type PageDataBuilder struct{}
 
 func (pdb *PageDataBuilder) Build(webPageUrl string, bodyString string, RLogger *slog.Logger) (*PageData, *webfetch.ErrorResponse) {
+	/**
+	Go query does not validate html. So no error is returned if the html is invalid.
+	Ideally string should be validated for html before parsing it.
+	*/
+	doc, _ := goquery.NewDocumentFromReader(strings.NewReader(bodyString))
+
+	// if err != nil {
+	// 	RLogger.Error("Error parsing HTML", "HTML parsing error", err)
+	// 	return nil, webfetch.BuildErrorResponse(http.StatusBadRequest, "Web page url contains invalid html content")
+	// }
+
 	docTypeStr := utils.ExtractDoctypeFromHtmlSource(bodyString)
-
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(bodyString))
-
-	if err != nil {
-		RLogger.Error("Error parsing HTML", "HTML parsing error", err)
-
-		return nil, webfetch.BuildErrorResponse(http.StatusInternalServerError, "Something went wrong")
-	}
-
 	origin, _ := utils.GetOriginFromURL(webPageUrl)
 
 	return &PageData{

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"golang.org/x/net/html"
 )
 
 const REQUEST_TIMEOUT_SECONDS = 3
@@ -107,4 +108,34 @@ func GetOriginFromURL(urlStr string) (string, error) {
 
 	origin := fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
 	return origin, nil
+}
+
+/*
+*This function has not been used in the code. However need a html tag validation
+function as goquery does not validate the html tags.
+*/
+func ValidateHTMLTags(htmlString string) error {
+	reader := strings.NewReader(htmlString)
+	tokenizer := html.NewTokenizer(reader)
+
+	for {
+		tokenType := tokenizer.Next()
+		switch tokenType {
+		case html.ErrorToken:
+			err := tokenizer.Err()
+			if err != nil {
+				if err.Error() == "EOF" {
+					return nil // End of file, valid
+				}
+				return err // Return other errors
+			}
+			return nil //EOF with no error
+		case html.StartTagToken, html.EndTagToken, html.SelfClosingTagToken:
+			// You can perform more advanced checks here, such as:
+			// - Ensuring tags are properly nested.
+			// - Checking for required attributes.
+			// - Ensuring tag names are valid.
+			// For basic well-formedness, the parsing itself is sufficient.
+		}
+	}
 }
