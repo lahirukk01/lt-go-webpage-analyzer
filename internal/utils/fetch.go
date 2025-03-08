@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"golang.org/x/net/html"
 )
 
 func IsValidURL(webPageUrl string) bool {
@@ -113,28 +112,28 @@ func GetOriginFromURL(urlStr string) (string, error) {
 *This function has not been used in the code. However need a html tag validation
 function as goquery does not validate the html tags.
 */
-func ValidateHTMLTags(htmlString string) error {
-	reader := strings.NewReader(htmlString)
-	tokenizer := html.NewTokenizer(reader)
+// func ValidateHTMLTags(htmlString string) error {
+// 	reader := strings.NewReader(htmlString)
+// 	tokenizer := html.NewTokenizer(reader)
 
-	for {
-		tokenType := tokenizer.Next()
-		switch tokenType {
-		case html.ErrorToken:
-			err := tokenizer.Err()
-			if err != nil {
-				if err.Error() == "EOF" {
-					return nil // End of file, valid
-				}
-				return err // Return other errors
-			}
-			return nil //EOF with no error
-		case html.StartTagToken, html.EndTagToken, html.SelfClosingTagToken:
-			// You can perform more advanced checks here, such as:
-			// - Ensuring tags are properly nested.
-			// - Checking for required attributes.
-			// - Ensuring tag names are valid.
-			// For basic well-formedness, the parsing itself is sufficient.
-		}
-	}
-}
+// 	for {
+// 		tokenType := tokenizer.Next()
+// 		switch tokenType {
+// 		case html.ErrorToken:
+// 			err := tokenizer.Err()
+// 			if err != nil {
+// 				if err.Error() == "EOF" {
+// 					return nil // End of file, valid
+// 				}
+// 				return err // Return other errors
+// 			}
+// 			return nil //EOF with no error
+// 		case html.StartTagToken, html.EndTagToken, html.SelfClosingTagToken:
+// 			// You can perform more advanced checks here, such as:
+// 			// - Ensuring tags are properly nested.
+// 			// - Checking for required attributes.
+// 			// - Ensuring tag names are valid.
+// 			// For basic well-formedness, the parsing itself is sufficient.
+// 		}
+// 	}
+// }
