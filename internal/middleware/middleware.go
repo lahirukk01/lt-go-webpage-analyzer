@@ -21,6 +21,6 @@ func SetupMiddleware(app *fiber.App) {
 	app.Use(requestid.New())
 	app.Use(logger.New(logger.Config{
 		TimeFormat: time.RFC3339,
-		Format:     "${time} | ${status} | ${latency} | ${ip} | ${locals:requestid} | ${method} | ${path} | ${error}\n",
+		Format:     "${time} | ${status} | ${latency} | ${ip} | reqid: ${locals:requestid} | ${method} | ${path} | ${error}\n",
 	}))
 }
