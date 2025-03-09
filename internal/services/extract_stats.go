@@ -2,13 +2,14 @@ package services
 
 import (
 	"log/slog"
+	"lt-app/internal/myhttp"
 	"lt-app/internal/pagedata"
 	"lt-app/internal/pagestats"
 	"lt-app/internal/webfetch"
 )
 
 func FetchWebPageStats(webPageUrl string, RLogger *slog.Logger) (*pagestats.WebPageStats, *webfetch.ErrorResponse) {
-	webfetcher := &webfetch.HTTPFetcher{}
+	webfetcher := webfetch.NewWebFetcher(myhttp.NewRestyClient())
 	bodyString, fetchError := webfetcher.Fetch(webPageUrl, RLogger)
 
 	if fetchError != nil {
