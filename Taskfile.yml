@@ -69,7 +69,12 @@ tasks:
       - golangci-lint run --fix
     silent: true
 
-  deps:
+  dep:download:
+    cmds:
+      - go mod download
+    silent: true
+
+  dep:tidy:
     cmds:
       - go mod tidy
     silent: true
