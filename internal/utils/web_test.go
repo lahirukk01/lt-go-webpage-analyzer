@@ -1,9 +1,6 @@
 package utils
 
 import (
-	appLogger "lt-app/internal/applogger"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -82,46 +79,6 @@ func TestExtractDoctypeFromHtmlSource(t *testing.T) {
 			result := ExtractDoctypeFromHtmlSource(test.htmlSource)
 			if result != test.expected {
 				t.Errorf("ExtractDoctypeFromHtmlSource(%q) = %v; want %v", test.htmlSource, result, test.expected)
-			}
-		})
-	}
-}
-
-type LinkAccessTest struct {
-	name           string
-	mockStatusCode int
-	expectedResult bool
-	mockURL        string
-}
-
-var tests = []LinkAccessTest{
-	{"Accessible Link", http.StatusOK, true, ""},
-	{"Inaccessible Link", http.StatusNotFound, false, ""},
-	{"Server Error", http.StatusInternalServerError, false, ""},
-	{"Invalid URL", 0, false, "://invalid-url"},
-}
-
-func TestCheckLinkAccessibilityWithResty(t *testing.T) {
-	appLogger.InitLogger()
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			// Determine the URL to use
-			urlToTest := test.mockURL
-			if urlToTest == "" {
-				// Create a mock server
-				mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(test.mockStatusCode)
-				}))
-				defer mockServer.Close()
-				urlToTest = mockServer.URL
-			}
-
-			// Call the function to test
-			isAccessible := CheckLinkAccessibilityWithResty(urlToTest)
-
-			if isAccessible != test.expectedResult {
-				t.Errorf("CheckLinkAccessibilityWithResty(%q) = %v; want %v", test.name, isAccessible, test.expectedResult)
 			}
 		})
 	}

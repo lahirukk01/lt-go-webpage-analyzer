@@ -2,15 +2,9 @@ package utils
 
 import (
 	"fmt"
-	appLogger "lt-app/internal/applogger"
-	"lt-app/internal/constants"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
-	"time"
-
-	"github.com/go-resty/resty/v2"
 )
 
 func IsValidURL(webPageUrl string) bool {
@@ -46,29 +40,6 @@ func GetOriginFromURL(urlStr string) (string, error) {
 
 	origin := fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
 	return origin, nil
-}
-
-/*
-Function to check the accessibility of a link using the HEAD method with Resty.
-*/
-func CheckLinkAccessibilityWithResty(url string) bool {
-	client := resty.New().SetTimeout(constants.REQUEST_TIMEOUT_SECONDS * time.Second)
-
-	resp, err := client.R().Get(url)
-
-	if err != nil {
-		appLogger.Logger.Info("Failed to check link accessibility", "url", url, "error", err)
-		return false
-	}
-
-	defer resp.RawBody().Close()
-
-	if resp.StatusCode() != http.StatusOK {
-		appLogger.Logger.Info("Inaccessible link", "url", url, "statusCode", resp.StatusCode())
-		return false
-	}
-
-	return true
 }
 
 /*
