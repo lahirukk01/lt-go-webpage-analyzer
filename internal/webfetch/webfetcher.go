@@ -1,5 +1,3 @@
-// webfetch/fetcher.go
-
 package webfetch
 
 import (

@@ -41,7 +41,12 @@ tasks:
 
   test:
     cmds:
-      - go test ./...
+      - go test -v ./...
+    silent: true
+
+  coverage:html:
+    cmds:
+      - go tool cover -html=coverage.out
     silent: true
 
   clean:
@@ -57,6 +62,11 @@ tasks:
   lint:
     cmds:
       - golangci-lint run
+    silent: true
+
+  lint:fix:
+    cmds:
+      - golangci-lint run --fix
     silent: true
 
   deps:

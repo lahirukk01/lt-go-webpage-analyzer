@@ -34,9 +34,10 @@ jobs:
         run: go build -o bin/app ./cmd
 
       - name: Run tests
-        run: go test ./...
+        run: go test -v ./...
 
-      # - name: Deploy to development environment
-      #   run: |
-      #     echo "Deploying to development environment..."
-      #     # Add your deployment commands here
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build the Docker image
+        run: docker build -t lt-app .
