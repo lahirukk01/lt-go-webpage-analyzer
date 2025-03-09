@@ -57,6 +57,7 @@ func fetchPageSource(webPageurl string, wg *sync.WaitGroup, fetchResult chan<- F
 
 	client := resty.New().SetTimeout(5 * time.Second) // Set a timeout of 5 seconds
 	client.SetDoNotParseResponse(true)                // Do not parse the response body
+	client.SetContentLength(true)
 
 	resp, err := client.R().
 		Get(webPageurl)
@@ -122,7 +123,7 @@ func (f *HTTPFetcher) GetInaccessibleLinks(urls []string) []string {
 	semaphore := make(chan struct{}, constants.CONCURRENT_GOROUTINE_LIMIT) // Limit the number of concurrent requests
 
 	// Reduce reallocation by setting the capacity of the slice
-	var inaccessibleLinks = make([]string, 0, len(urls))
+	var inaccessibleLinks = make([]string, 0, constants.INACC_LINKS_INIT_CAP)
 	var mu sync.Mutex
 
 	wg.Add(len(urls))
