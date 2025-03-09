@@ -1,8 +1,8 @@
 package routes
 
 import (
+	appLogger "lt-app/internal/applogger"
 	"lt-app/internal/handlers"
-	appLogger "lt-app/internal/logger"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/monitor"

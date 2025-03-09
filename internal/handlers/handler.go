@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"log/slog"
-	appLogger "lt-app/internal/logger"
+	appLogger "lt-app/internal/applogger"
 	"lt-app/internal/services"
 	"lt-app/internal/utils"
 	"path/filepath"
