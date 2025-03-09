@@ -39,8 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const payload = {webPageUrl};
 
-        console.log('Payload:', payload);
-
         button.disabled = true;
 
         loader.style.display = 'block';
@@ -60,8 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 displayError(error);
             } else {
                 const data = await response.json();
-
-                console.log('Success:', data);
 
                 if (data.error) {
                     displayError(data);
