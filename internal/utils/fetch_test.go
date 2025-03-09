@@ -4,7 +4,6 @@ import (
 	appLogger "lt-app/internal/applogger"
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"testing"
 )
 
@@ -96,21 +95,13 @@ type LinkAccessTest struct {
 }
 
 var tests = []LinkAccessTest{
-	{"Accessible Link", http.StatusOK, false, ""},
-	{"Inaccessible Link", http.StatusNotFound, true, ""},
-	{"Server Error", http.StatusInternalServerError, true, ""},
-	{"Invalid URL", 0, true, "://invalid-url"},
+	{"Accessible Link", http.StatusOK, true, ""},
+	{"Inaccessible Link", http.StatusNotFound, false, ""},
+	{"Server Error", http.StatusInternalServerError, false, ""},
+	{"Invalid URL", 0, false, "://invalid-url"},
 }
 
 func TestCheckLinkAccessibilityWithResty(t *testing.T) {
-	linkAccessTestRuner(t, CheckLinkAccessibilityWithResty)
-}
-
-func TestCheckLinkAccessibility(t *testing.T) {
-	linkAccessTestRuner(t, CheckLinkAccessibility)
-}
-
-func linkAccessTestRuner(t *testing.T, fetchFunc func(url string, wg *sync.WaitGroup, inaccessibleLinksChan chan<- string)) {
 	appLogger.InitLogger()
 
 	for _, test := range tests {
@@ -126,29 +117,11 @@ func linkAccessTestRuner(t *testing.T, fetchFunc func(url string, wg *sync.WaitG
 				urlToTest = mockServer.URL
 			}
 
-			// Create a wait group
-			var wg sync.WaitGroup
-			wg.Add(1)
-
-			// Create a channel to receive inaccessible links
-			inaccessibleLinksChan := make(chan string, 1)
 			// Call the function to test
-			go fetchFunc(urlToTest, &wg, inaccessibleLinksChan)
+			isAccessible := CheckLinkAccessibilityWithResty(urlToTest)
 
-			// Wait for the function to complete
-			wg.Wait()
-			close(inaccessibleLinksChan)
-
-			// Check the result
-			select {
-			case link := <-inaccessibleLinksChan:
-				if !test.expectedResult && link != "" {
-					t.Errorf("Expected no inaccessible link, but got %v", link)
-				}
-			default:
-				if test.expectedResult {
-					t.Error("Expected an inaccessible link, but got none")
-				}
+			if isAccessible != test.expectedResult {
+				t.Errorf("CheckLinkAccessibilityWithResty(%q) = %v; want %v", test.name, isAccessible, test.expectedResult)
 			}
 		})
 	}
