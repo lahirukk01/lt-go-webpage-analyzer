@@ -2,6 +2,7 @@ package myhttp
 
 import (
 	"lt-app/internal/constants"
+	"net/http"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -25,4 +26,8 @@ func NewRestyClient() *RestyClient {
 func (c *RestyClient) Get(url string) (*resty.Response, error) {
 	resp, err := c.client.R().Get(url)
 	return resp, err
+}
+
+func (r *RestyClient) SetTransport(transport http.RoundTripper) {
+	r.client.SetTransport(transport)
 }

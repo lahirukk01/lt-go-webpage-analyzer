@@ -3,14 +3,12 @@ package webfetch
 import (
 	"io"
 	"log/slog"
+	"lt-app/internal/applogger"
 	"lt-app/internal/constants"
-	"lt-app/internal/utils"
+	"lt-app/internal/myhttp"
 	"net/http"
 	"strings"
 	"sync"
-	"time"
-
-	"github.com/go-resty/resty/v2"
 )
 
 // ErrorResponse represents an error response with a status code and message
@@ -29,14 +27,20 @@ type IFetcher interface {
 	GetInaccessibleLinks(urls []string) []string
 }
 
-type HTTPFetcher struct{}
+type WebFetcher struct {
+	httpClient myhttp.HTTPClient
+}
 
-func (f *HTTPFetcher) Fetch(webPageurl string, RLogger *slog.Logger) (string, *ErrorResponse) {
+func NewWebFetcher(client myhttp.HTTPClient) *WebFetcher {
+	return &WebFetcher{httpClient: client}
+}
+
+func (f *WebFetcher) Fetch(webPageurl string, RLogger *slog.Logger) (string, *ErrorResponse) {
 	var wg sync.WaitGroup
 	fetchResult := make(chan FetchPageSourceResult)
 
 	wg.Add(1)
-	go fetchPageSource(webPageurl, &wg, fetchResult, RLogger)
+	go f.fetchPageSource(webPageurl, &wg, fetchResult, RLogger)
 
 	go func() {
 		wg.Wait()
@@ -52,15 +56,11 @@ func (f *HTTPFetcher) Fetch(webPageurl string, RLogger *slog.Logger) (string, *E
 	return string(result.BodyBytes), nil
 }
 
-func fetchPageSource(webPageurl string, wg *sync.WaitGroup, fetchResult chan<- FetchPageSourceResult, RLogger *slog.Logger) {
+func (f *WebFetcher) fetchPageSource(webPageurl string, wg *sync.WaitGroup, fetchResult chan<- FetchPageSourceResult, RLogger *slog.Logger) {
 	defer wg.Done()
 
-	client := resty.New().SetTimeout(5 * time.Second) // Set a timeout of 5 seconds
-	client.SetDoNotParseResponse(true)                // Do not parse the response body
-	client.SetContentLength(true)
-
-	resp, err := client.R().
-		Get(webPageurl)
+	// Use the injected httpClient
+	resp, err := f.httpClient.Get(webPageurl)
 
 	if err != nil {
 		RLogger.Error("Request Error:", "error", err)
@@ -117,7 +117,7 @@ func BuildErrorResponse(statusCode int, message string) *ErrorResponse {
 	}
 }
 
-func (f *HTTPFetcher) GetInaccessibleLinks(urls []string) []string {
+func (f *WebFetcher) GetInaccessibleLinks(urls []string) []string {
 	// Count the number of inaccessible links
 	var wg sync.WaitGroup
 	semaphore := make(chan struct{}, constants.CONCURRENT_GOROUTINE_LIMIT) // Limit the number of concurrent requests
@@ -136,7 +136,7 @@ func (f *HTTPFetcher) GetInaccessibleLinks(urls []string) []string {
 				<-semaphore // Release the semaphore
 				wg.Done()
 			}()
-			if !utils.CheckLinkAccessibilityWithResty(link) {
+			if !f.checkLinkAccessibilityWithResty(link) {
 				mu.Lock()
 				inaccessibleLinks = append(inaccessibleLinks, link)
 				mu.Unlock()
@@ -147,4 +147,25 @@ func (f *HTTPFetcher) GetInaccessibleLinks(urls []string) []string {
 	wg.Wait()
 
 	return inaccessibleLinks
+}
+
+/*
+Function to check the accessibility of a link using the HEAD method with Resty.
+*/
+func (f *WebFetcher) checkLinkAccessibilityWithResty(url string) bool {
+	resp, err := f.httpClient.Get(url)
+
+	if err != nil {
+		applogger.Logger.Info("Failed to check link accessibility", "url", url, "error", err)
+		return false
+	}
+
+	defer resp.RawBody().Close()
+
+	if resp.StatusCode() != http.StatusOK {
+		applogger.Logger.Info("Inaccessible link", "url", url, "statusCode", resp.StatusCode())
+		return false
+	}
+
+	return true
 }
