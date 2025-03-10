@@ -21,7 +21,7 @@ The following assumptions and considerations were made during development:
     *   Multi-step login processes (username/password on separate pages).
     *   Login forms injected via JavaScript.
     *   Non-standard form structures.
-*   **CORS:** Some pages are protected by CORS, which may result in access being forbidden.
+    *   Some pages are protected by CORS, which may result in access being forbidden.
 
 ## Architecture
 
